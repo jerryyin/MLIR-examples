@@ -12,9 +12,9 @@
 struct StridedMemRef5D {
   void *basePtr;
   void *data;
-  int64_t offset;
-  int64_t sizes[5];
-  int64_t strides[5];
+  int32_t offset;
+  int32_t sizes[5];
+  int32_t strides[5];
 };
 
 using DataType_t = float;
@@ -38,7 +38,7 @@ void conv2dDevice(
   hipModule_t Module;
   hipFunction_t Function;
   HIP_CHECK(hipModuleLoad(&Module, "conv.hsaco"));
-  HIP_CHECK(hipModuleGetFunction(&Function, Module, "mlir_gen_igemm_conv2d_v4r1_bwd0"));
+  HIP_CHECK(hipModuleGetFunction(&Function, Module, "mlir_gen_igemm_conv2d_v4r4_fwd"));
 
   struct {
 	  MemRef5DFp32 filter;
@@ -73,8 +73,7 @@ void conv2dDevice(
   //    std::cout << std::setw(2) << static_cast<unsigned>(*ptr) << " ";
   //}
 
-  //HIP_CHECK(hipModuleLaunchKernel(Function, 784, 1, 1, 256, 1, 1,
-  HIP_CHECK(hipModuleLaunchKernel(Function, 3136, 1, 1, 256, 1, 1,
+  HIP_CHECK(hipModuleLaunchKernel(Function, 12544, 1, 1, 256, 1, 1,
 	  0, 0, NULL, (void**)&config));
 }
 
@@ -93,9 +92,9 @@ int main()
 
   std::cout << "Device name " << devProp.name << std::endl;
 
-  std::vector<int64_t> inputDims = { 256, 1, 1024, 14, 14 };
-  std::vector<int64_t> filterDims = { 1, 256, 1024, 1, 1 };
-  std::vector<int64_t> outputDims = { 256, 1, 256, 14, 14 };
+  std::vector<int64_t> filterDims = { 1, 256, 64, 1, 1 };
+  std::vector<int64_t> inputDims = { 256, 1, 64, 56, 56 };
+  std::vector<int64_t> outputDims = { 256, 1, 256, 56, 56 };
 
   DataType_t* filterD = nullptr;
   DataType_t* inputD = nullptr;
