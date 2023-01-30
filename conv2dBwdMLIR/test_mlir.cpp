@@ -38,42 +38,24 @@ void conv2dDevice(
   hipModule_t Module;
   hipFunction_t Function;
   HIP_CHECK(hipModuleLoad(&Module, "conv.hsaco"));
-  HIP_CHECK(hipModuleGetFunction(&Function, Module, "mlir_gen_igemm_conv2d_v4r4_fwd"));
+  HIP_CHECK(hipModuleGetFunction(&Function, Module, "mlir_gen_igemm_conv2d_v4r1_bwd0"));
 
   struct {
-	  MemRef5DFp32 filter;
-	  MemRef5DFp32 input;
-	  MemRef5DFp32 output;
+	  void* filter;
+	  void* input;
+	  void* output;
+	  void* workspace;
   } args;
 
-  auto cpyToMemRef = [](DataType_t* ptr, const std::vector<int64_t>& dims,
-		   const std::vector<int64_t>& strides, MemRef5DFp32& target) {
-	  target.basePtr = ptr;
-	  target.data = ptr;
-	  target.offset = 0;
-	  std::copy(dims.begin(), dims.end(), &target.sizes[0]);
-	  std::copy(strides.begin(), strides.end(), &target.strides[0]);
-  };
-
-  cpyToMemRef(filterD, filterDims, filterStrides, args.filter);
-  cpyToMemRef(inputD, inputDims, inputStrides, args.input);
-  cpyToMemRef(outputD, outputDims, outputStrides, args.output);
+  args.filter = filterD;
+  args.input = inputD;
+  args.output = outputD;
 
   size_t size = sizeof(args);
   void* config[] = { HIP_LAUNCH_PARAM_BUFFER_POINTER, &args, 
     HIP_LAUNCH_PARAM_BUFFER_SIZE, &size, HIP_LAUNCH_PARAM_END };
 
-
-  //std::cout << std::hex << std::setfill('0');  // needs to be set only once
-  //auto *ptr = reinterpret_cast<unsigned char *>(&args);
-  //for (int i = 0; i < size; i++, ptr++) {
-  //    if (i % sizeof(unsigned long long) == 0) {
-  //            std::cout << std::endl;
-  //        }
-  //    std::cout << std::setw(2) << static_cast<unsigned>(*ptr) << " ";
-  //}
-
-  HIP_CHECK(hipModuleLaunchKernel(Function, 12544, 1, 1, 256, 1, 1,
+  HIP_CHECK(hipModuleLaunchKernel(Function, 3136, 1, 1, 256, 1, 1,
 	  0, 0, NULL, (void**)&config));
 }
 
