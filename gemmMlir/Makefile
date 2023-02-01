@@ -10,11 +10,14 @@ CXXFLAGS += -Werror
 
 TESTMLIR_SOURCE=test_mlir.cpp
 
-# TO populate conv.ll:
+# TO populate gemm.ll:
 # ./bin/rocmlir-gen -operation gemm -t f32 --arch gfx90a -g 1 -m 2 -k 8 -n 34 -perf_config=64,64,2,64,32,2,1,1 | ./bin/rocmlir-driver -kernel-pipeline=gpu,rocdl | ./bin/rocmlir-translate -gpu-module-to-rocdlir | ./external/llvm-project/llvm/bin/opt -passes='default<O3>,strip' -S  &> gemm.ll
-#
+
 gemm.s : gemm.ll
-	$(LLC) -mcpu=$(ARCH) -o $@ $^
+	$(LLC) -mcpu=$(ARCH) -O3 -o $@ $^
+
+#gemm.s : gemm.ll
+#	$(LLC) -mcpu=$(ARCH) -O0 -o $@ $^
 
 gemm.o : gemm.s
 	$(LLVMMC) --triple=amdgcn-amd-amdhsa -mcpu=$(ARCH) --filetype=obj -o $@ $^
